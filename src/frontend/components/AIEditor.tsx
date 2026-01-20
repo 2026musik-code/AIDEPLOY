@@ -92,10 +92,18 @@ const AIEditor = ({ credentials, onClose, initialCode, workerName: initialName }
         addLog('Deployment complete!');
         setTimeout(() => setStatus(null), 3000);
       } else {
-        addLog(`Deployment failed: ${data.error}`);
+        const errorMsg = typeof data.error === 'string' ? data.error : JSON.stringify(data.error);
+        addLog(`Deployment failed: ${errorMsg}`);
+
+        // Enhance error message for AI if it's a module issue
+        let enhancedError = errorMsg;
+        if (errorMsg.includes('imported from') || errorMsg.includes('not found') || errorMsg.includes('hono')) {
+           enhancedError = `Module resolution error: ${errorMsg}. REMINDER: You MUST NOT use any external imports or libraries like 'hono'. Use native Cloudflare Workers APIs only.`;
+        }
+
         // AUTO-FIX LOGIC
         addLog('Attempting auto-fix with AI...');
-        await autoFix(data.error);
+        await autoFix(enhancedError);
       }
     } catch (err: any) {
       setError(err.message);

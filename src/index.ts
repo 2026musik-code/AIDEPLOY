@@ -174,6 +174,8 @@ app.post('/api/ai/generate', async (c) => {
 Generate a high-quality, production-ready, modern and sophisticated Cloudflare Worker script based on the user's request.
 Return ONLY the code, no markdown markers like \`\`\`javascript or \`\`\`typescript.
 The code should be a single file. Use ES modules (export default { fetch... }) if possible.
+IMPORTANT: Do NOT use any external imports or libraries like 'hono'. Use ONLY native Cloudflare Workers APIs (Request, Response, etc.).
+The code must be self-contained and ready to run without a bundler.
 Ensure the code is robust, includes error handling, and follows best practices.
 User Request: ${prompt}
 ${existingCode ? `Existing Code to refine: ${existingCode}` : ''}
@@ -205,6 +207,7 @@ Error: ${error}
 Code:
 ${code}
 
+IMPORTANT: Do NOT use any external imports or libraries like 'hono'. Use ONLY native Cloudflare Workers APIs.
 Return ONLY the corrected code, no markdown markers. Ensure the fix is robust.`;
 
   try {
