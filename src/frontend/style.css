@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+@theme {
+  --color-luxury-gold: #d4af37;
+  --color-luxury-black: #0a0a0a;
+}
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: dark;
+  background-color: #020617;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+#root {
+  width: 100%;
+}

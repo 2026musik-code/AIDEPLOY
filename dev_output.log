@@ -1,0 +1,11 @@
+$ vite
+
+  VITE v7.3.1  ready in 405 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+4:12:02 AM [vite] (client) hmr update /src/frontend/style.css?direct, /src/frontend/style.css
+4:13:19 AM [vite] (client) hmr update /src/frontend/style.css?direct, /src/frontend/style.css, /src/frontend/components/Login.tsx
+4:14:59 AM [vite] vite.config.ts changed, restarting server...
+4:14:59 AM [vite] (client) Re-optimizing dependencies because lockfile has changed
+4:14:59 AM [vite] server restarted.
