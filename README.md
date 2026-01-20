@@ -23,7 +23,7 @@ This project is ready to be deployed to your own Cloudflare account.
    ```bash
    bun install
    ```
-3. **Build the frontend:**
+3. **Build the frontend (IMPORTANT):**
    ```bash
    bun run build
    ```
@@ -35,6 +35,8 @@ This project is ready to be deployed to your own Cloudflare account.
    ```bash
    bun run deploy
    ```
+
+**Note:** If you run `npx wrangler deploy` directly, make sure you have already run `bun run build`.
 
 The project uses Cloudflare's new `assets` feature to serve the frontend and the Hono API in a single worker.
 

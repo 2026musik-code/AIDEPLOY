@@ -1,5 +1,5 @@
 {
-  "name": "/app",
+  "name": "ai-worker-deployer",
   "module": "index.ts",
   "type": "module",
   "private": true,
