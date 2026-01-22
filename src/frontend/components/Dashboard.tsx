@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Plus,
+  Cpu,
   Trash2,
   Edit3,
   Globe,
