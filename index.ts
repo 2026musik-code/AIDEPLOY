@@ -169,8 +169,9 @@ app.post('/api/ai/generate', async (c) => {
   const { prompt, model, geminiKey, existingCode } = await c.req.json();
 
   let modelId = model || "gemini-1.5-flash";
-  if (modelId.includes("2.5") || modelId.includes("3.0")) {
-    modelId = "gemini-2.0-flash-exp";
+  // Fallback gemini-2.0-flash-exp to gemini-1.5-flash due to quota
+  if (modelId === "gemini-2.0-flash-exp" || modelId.includes("2.5") || modelId.includes("3.0")) {
+    modelId = "gemini-1.5-flash";
   }
 
   const genAI = new GoogleGenerativeAI(geminiKey);
@@ -205,8 +206,8 @@ app.post('/api/ai/fix', async (c) => {
   const { error, code, model, geminiKey } = await c.req.json();
 
   let modelId = model || "gemini-1.5-flash";
-  if (modelId.includes("2.5") || modelId.includes("3.0")) {
-    modelId = "gemini-2.0-flash-exp";
+  if (modelId === "gemini-2.0-flash-exp" || modelId.includes("2.5") || modelId.includes("3.0")) {
+    modelId = "gemini-1.5-flash";
   }
 
   const genAI = new GoogleGenerativeAI(geminiKey);
