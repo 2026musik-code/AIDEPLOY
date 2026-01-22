@@ -184,15 +184,21 @@ ${existingCode ? `Existing Code to refine: ${existingCode}` : ''}
 `;
 
   return streamText(c, async (stream) => {
+    let fullCode = '';
     try {
       const result = await aiModel.generateContentStream(systemPrompt);
       for await (const chunk of result.stream) {
         const chunkText = chunk.text();
         // Simple cleanup for common markdown artifacts if they appear mid-stream
         const cleaned = chunkText.replace(/```(?:javascript|typescript|js|ts)?\n?/g, '').replace(/```/g, '');
+        fullCode += cleaned;
         await stream.write(cleaned);
       }
+      console.log('--- Generated Code ---');
+      console.log(fullCode);
+      console.log('----------------------');
     } catch (error: any) {
+      console.error('AI Generation Error:', error);
       await stream.write(`ERROR: ${error.message}`);
     }
   });
@@ -216,14 +222,20 @@ IMPORTANT: Do NOT use any external imports or libraries like 'hono'. Use ONLY na
 Return ONLY the corrected code, no markdown markers.`;
 
   return streamText(c, async (stream) => {
+    let fullCode = '';
     try {
       const result = await aiModel.generateContentStream(systemPrompt);
       for await (const chunk of result.stream) {
         const chunkText = chunk.text();
         const cleaned = chunkText.replace(/```(?:javascript|typescript|js|ts)?\n?/g, '').replace(/```/g, '');
+        fullCode += cleaned;
         await stream.write(cleaned);
       }
+      console.log('--- Fixed Code ---');
+      console.log(fullCode);
+      console.log('------------------');
     } catch (err: any) {
+      console.error('AI Fix Error:', err);
       await stream.write(`ERROR: ${err.message}`);
     }
   });
