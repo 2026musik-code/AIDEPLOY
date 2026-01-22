@@ -258,20 +258,10 @@ const AIEditor = ({ credentials, onClose, initialCode, workerName: initialName }
           </div>
         </div>
 
-        <div className="mt-auto pt-6 border-t border-slate-800">
-          <button
-            onClick={handleDeploy}
-            disabled={deploying || loading || !code || code.includes('//')}
-            className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-500/10"
-          >
-            {deploying ? <Loader2 className="animate-spin" size={20} /> : <Zap size={20} />}
-            Deploy Worker
-          </button>
-        </div>
       </div>
 
       {/* Code Editor Area */}
-      <div className="flex-1 flex flex-col bg-[#0d1117]">
+      <div className="flex-1 flex flex-col bg-[#0d1117] min-h-0">
         <div className="border-b border-slate-800/80 px-4 py-2 flex items-center justify-between bg-slate-900/50 backdrop-blur-md">
           <div className="flex items-center gap-2 text-sm font-medium text-slate-400">
             <Code size={16} />
@@ -309,7 +299,7 @@ const AIEditor = ({ credentials, onClose, initialCode, workerName: initialName }
         </div>
 
         {/* Console / Logs */}
-        <div className="h-48 border-t border-slate-800 bg-slate-950 flex flex-col">
+        <div className="h-32 md:h-48 border-t border-slate-800 bg-slate-950 flex flex-col shrink-0">
           <div className="px-4 py-1.5 border-b border-slate-800 flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
             <TerminalIcon size={12} />
             Console
@@ -329,6 +319,18 @@ const AIEditor = ({ credentials, onClose, initialCode, workerName: initialName }
             )}
             <div ref={scrollRef} />
           </div>
+        </div>
+
+        {/* Deploy Button Area */}
+        <div className="p-4 border-t border-slate-800 bg-slate-900 shrink-0">
+          <button
+            onClick={handleDeploy}
+            disabled={deploying || loading || !code || code.includes('//')}
+            className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-500/10"
+          >
+            {deploying ? <Loader2 className="animate-spin" size={20} /> : <Zap size={20} />}
+            Deploy Worker
+          </button>
         </div>
       </div>
     </div>
