@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { streamText } from 'hono/streaming';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const app = new Hono();
@@ -167,10 +168,9 @@ app.post('/api/workers/domain', async (c) => {
 app.post('/api/ai/generate', async (c) => {
   const { prompt, model, geminiKey, existingCode } = await c.req.json();
 
-  // Map requested models to actual available Gemini model IDs
   let modelId = model || "gemini-1.5-flash";
   if (modelId.includes("2.5") || modelId.includes("3.0")) {
-    modelId = "gemini-2.0-flash-exp"; // Fallback to best available
+    modelId = "gemini-2.0-flash-exp";
   }
 
   const genAI = new GoogleGenerativeAI(geminiKey);
@@ -180,25 +180,25 @@ app.post('/api/ai/generate', async (c) => {
 Generate a high-quality, production-ready, modern and sophisticated Cloudflare Worker script based on the user's request.
 Return ONLY the code, no markdown markers like \`\`\`javascript or \`\`\`typescript.
 The code should be a single file. Use ES modules (export default { fetch... }) if possible.
-IMPORTANT: Do NOT use any external imports or libraries like 'hono'. Use ONLY native Cloudflare Workers APIs (Request, Response, etc.).
+IMPORTANT: Do NOT use any external imports or libraries like 'hono'. Use ONLY native Cloudflare Workers APIs.
 The code must be self-contained and ready to run without a bundler.
-Ensure the code is robust, includes error handling, and follows best practices.
 User Request: ${prompt}
 ${existingCode ? `Existing Code to refine: ${existingCode}` : ''}
 `;
 
-  try {
-    const result = await aiModel.generateContent(systemPrompt);
-    const response = await result.response;
-    let text = response.text();
-
-    // Clean up markdown if AI included it
-    text = text.replace(/```(?:javascript|typescript|js|ts)?\n/g, '').replace(/```/g, '').trim();
-
-    return c.json({ success: true, code: text });
-  } catch (error: any) {
-    return c.json({ success: false, error: error.message }, 500);
-  }
+  return streamText(c, async (stream) => {
+    try {
+      const result = await aiModel.generateContentStream(systemPrompt);
+      for await (const chunk of result.stream) {
+        const chunkText = chunk.text();
+        // Simple cleanup for common markdown artifacts if they appear mid-stream
+        const cleaned = chunkText.replace(/```(?:javascript|typescript|js|ts)?\n?/g, '').replace(/```/g, '');
+        await stream.write(cleaned);
+      }
+    } catch (error: any) {
+      await stream.write(`ERROR: ${error.message}`);
+    }
+  });
 });
 
 app.post('/api/ai/fix', async (c) => {
@@ -206,7 +206,7 @@ app.post('/api/ai/fix', async (c) => {
 
   let modelId = model || "gemini-1.5-flash";
   if (modelId.includes("2.5") || modelId.includes("3.0")) {
-    modelId = "gemini-2.0-flash-exp"; // Fallback to best available
+    modelId = "gemini-2.0-flash-exp";
   }
 
   const genAI = new GoogleGenerativeAI(geminiKey);
@@ -219,18 +219,20 @@ Code:
 ${code}
 
 IMPORTANT: Do NOT use any external imports or libraries like 'hono'. Use ONLY native Cloudflare Workers APIs.
-Return ONLY the corrected code, no markdown markers. Ensure the fix is robust.`;
+Return ONLY the corrected code, no markdown markers.`;
 
-  try {
-    const result = await aiModel.generateContent(systemPrompt);
-    const response = await result.response;
-    let text = response.text();
-    text = text.replace(/```(?:javascript|typescript|js|ts)?\n/g, '').replace(/```/g, '').trim();
-
-    return c.json({ success: true, code: text });
-  } catch (error: any) {
-    return c.json({ success: false, error: error.message }, 500);
-  }
+  return streamText(c, async (stream) => {
+    try {
+      const result = await aiModel.generateContentStream(systemPrompt);
+      for await (const chunk of result.stream) {
+        const chunkText = chunk.text();
+        const cleaned = chunkText.replace(/```(?:javascript|typescript|js|ts)?\n?/g, '').replace(/```/g, '');
+        await stream.write(cleaned);
+      }
+    } catch (err: any) {
+      await stream.write(`ERROR: ${err.message}`);
+    }
+  });
 });
 
 // Static files (Vite build)

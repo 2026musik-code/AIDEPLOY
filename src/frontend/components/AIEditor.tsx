@@ -45,14 +45,24 @@ const AIEditor = ({ credentials, onClose, initialCode, workerName: initialName }
         })
       });
 
-      const data = await response.json();
-      if (data.success) {
-        setCode(data.code);
-        if (data.name && !workerName) setWorkerName(data.name);
-        addLog('Code generated successfully!');
-      } else {
-        throw new Error(data.error);
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('Failed to start stream');
+
+      let accumulatedCode = '';
+      setCode(''); // Clear for real-time effect
+
+      const decoder = new TextDecoder();
+      addLog('Stream started...');
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value);
+        if (chunk.startsWith('ERROR:')) throw new Error(chunk.replace('ERROR:', ''));
+        accumulatedCode += chunk;
+        setCode(accumulatedCode);
       }
+
+      addLog('Code generated successfully!');
     } catch (err: any) {
       setError(err.message);
       addLog(`Error: ${err.message}`);
@@ -127,15 +137,26 @@ const AIEditor = ({ credentials, onClose, initialCode, workerName: initialName }
           geminiKey: credentials.geminiKey
         })
       });
-      const data = await response.json();
-      if (data.success) {
-        setCode(data.code);
-        addLog('Auto-fix complete! Retrying deployment...');
-        // We could automatically retry here
-        setTimeout(handleDeploy, 1000);
-      } else {
-        throw new Error(data.error);
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('Failed to start stream');
+
+      let accumulatedCode = '';
+      setCode('');
+
+      const decoder = new TextDecoder();
+      addLog('Auto-fix stream started...');
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value);
+        if (chunk.startsWith('ERROR:')) throw new Error(chunk.replace('ERROR:', ''));
+        accumulatedCode += chunk;
+        setCode(accumulatedCode);
       }
+
+      addLog('Auto-fix complete! Retrying deployment...');
+      setTimeout(handleDeploy, 1000);
     } catch (err: any) {
       setError(`Auto-fix failed: ${err.message}`);
     } finally {
