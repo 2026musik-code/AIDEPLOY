@@ -167,8 +167,14 @@ app.post('/api/workers/domain', async (c) => {
 app.post('/api/ai/generate', async (c) => {
   const { prompt, model, geminiKey, existingCode } = await c.req.json();
 
+  // Map requested models to actual available Gemini model IDs
+  let modelId = model || "gemini-1.5-flash";
+  if (modelId.includes("2.5") || modelId.includes("3.0")) {
+    modelId = "gemini-2.0-flash-exp"; // Fallback to best available
+  }
+
   const genAI = new GoogleGenerativeAI(geminiKey);
-  const aiModel = genAI.getGenerativeModel({ model: model || "gemini-1.5-flash" });
+  const aiModel = genAI.getGenerativeModel({ model: modelId });
 
   const systemPrompt = `You are an expert Cloudflare Workers developer.
 Generate a high-quality, production-ready, modern and sophisticated Cloudflare Worker script based on the user's request.
@@ -198,8 +204,13 @@ ${existingCode ? `Existing Code to refine: ${existingCode}` : ''}
 app.post('/api/ai/fix', async (c) => {
   const { error, code, model, geminiKey } = await c.req.json();
 
+  let modelId = model || "gemini-1.5-flash";
+  if (modelId.includes("2.5") || modelId.includes("3.0")) {
+    modelId = "gemini-2.0-flash-exp"; // Fallback to best available
+  }
+
   const genAI = new GoogleGenerativeAI(geminiKey);
-  const aiModel = genAI.getGenerativeModel({ model: model || "gemini-1.5-flash" });
+  const aiModel = genAI.getGenerativeModel({ model: modelId });
 
   const systemPrompt = `The following Cloudflare Worker code failed to deploy or has an error.
 You are a Cloudflare Workers expert. Fix the code to resolve the error.
