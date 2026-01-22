@@ -24,6 +24,13 @@ const AIEditor = ({ credentials, onClose, initialCode, workerName: initialName }
   const [status, setStatus] = useState<string | null>(null);
   const [model, setModel] = useState('gemini-1.5-flash');
   const [logs, setLogs] = useState<string[]>([]);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [logs]);
 
   const addLog = (msg: string) => setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
 
@@ -41,23 +48,40 @@ const AIEditor = ({ credentials, onClose, initialCode, workerName: initialName }
           prompt,
           model,
           geminiKey: credentials.geminiKey,
-          existingCode: code
+          existingCode: code.includes('//') ? '' : code
         })
       });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(errText || 'Failed to connect to AI');
+      }
 
       const reader = response.body?.getReader();
       if (!reader) throw new Error('Failed to start stream');
 
       let accumulatedCode = '';
-      setCode(''); // Clear for real-time effect
+      // We don't clear immediately to avoid "blank screen" flash
 
       const decoder = new TextDecoder();
       addLog('Stream started...');
+
+      let isFirstChunk = true;
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
+
         const chunk = decoder.decode(value);
-        if (chunk.startsWith('ERROR:')) throw new Error(chunk.replace('ERROR:', ''));
+        if (chunk.includes('ERROR:')) {
+          throw new Error(chunk.split('ERROR:')[1] || 'AI Stream Error');
+        }
+
+        if (isFirstChunk) {
+          setCode(''); // Clear only when first chunk arrives
+          isFirstChunk = false;
+        }
+
         accumulatedCode += chunk;
         setCode(accumulatedCode);
       }
@@ -138,11 +162,13 @@ const AIEditor = ({ credentials, onClose, initialCode, workerName: initialName }
         })
       });
 
+      if (!response.ok) throw new Error('Failed to start auto-fix stream');
+
       const reader = response.body?.getReader();
       if (!reader) throw new Error('Failed to start stream');
 
       let accumulatedCode = '';
-      setCode('');
+      let isFirstChunk = true;
 
       const decoder = new TextDecoder();
       addLog('Auto-fix stream started...');
@@ -150,7 +176,13 @@ const AIEditor = ({ credentials, onClose, initialCode, workerName: initialName }
         const { done, value } = await reader.read();
         if (done) break;
         const chunk = decoder.decode(value);
-        if (chunk.startsWith('ERROR:')) throw new Error(chunk.replace('ERROR:', ''));
+        if (chunk.includes('ERROR:')) throw new Error(chunk.split('ERROR:')[1]);
+
+        if (isFirstChunk) {
+          setCode('');
+          isFirstChunk = false;
+        }
+
         accumulatedCode += chunk;
         setCode(accumulatedCode);
       }
@@ -159,6 +191,7 @@ const AIEditor = ({ credentials, onClose, initialCode, workerName: initialName }
       setTimeout(handleDeploy, 1000);
     } catch (err: any) {
       setError(`Auto-fix failed: ${err.message}`);
+      addLog(`Auto-fix failed: ${err.message}`);
     } finally {
       setLoading(false);
       setStatus(null);
@@ -243,6 +276,7 @@ const AIEditor = ({ credentials, onClose, initialCode, workerName: initialName }
           <div className="flex items-center gap-2 text-sm font-medium text-slate-400">
             <Code size={16} />
             <span>worker.ts</span>
+            {loading && <Sparkles size={14} className="text-indigo-500 animate-spin" />}
           </div>
           {status && (
             <div className="flex items-center gap-2 text-xs font-medium text-emerald-400 animate-pulse">
@@ -252,7 +286,15 @@ const AIEditor = ({ credentials, onClose, initialCode, workerName: initialName }
           )}
         </div>
 
-        <div className="flex-1 relative font-mono text-sm group">
+        <div className="flex-1 relative font-mono text-sm group overflow-hidden">
+          {loading && !code && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-slate-900/20 backdrop-blur-[2px]">
+              <div className="flex flex-col items-center gap-3">
+                <Loader2 className="animate-spin text-indigo-500" size={40} />
+                <span className="text-slate-400 font-medium animate-pulse">AI is thinking...</span>
+              </div>
+            </div>
+          )}
           <div className="absolute left-0 top-0 bottom-0 w-12 bg-slate-900/20 border-r border-slate-800/50 flex flex-col items-center pt-6 text-slate-600 select-none">
             {[...Array(20)].map((_, i) => (
               <div key={i} className="leading-6 h-6">{i + 1}</div>
@@ -285,7 +327,7 @@ const AIEditor = ({ credentials, onClose, initialCode, workerName: initialName }
                 <span>{error}</span>
               </div>
             )}
-            <div ref={(el) => el?.scrollIntoView({ behavior: 'smooth' })} />
+            <div ref={scrollRef} />
           </div>
         </div>
       </div>

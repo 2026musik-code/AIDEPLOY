@@ -16,11 +16,9 @@ import {
 } from 'lucide-react';
 import AIEditor from './AIEditor';
 
-const Dashboard = ({ credentials }: { credentials: any }) => {
+const Dashboard = ({ credentials, setIsCreating, setEditingWorker }: any) => {
   const [workers, setWorkers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isCreating, setIsCreating] = useState(false);
-  const [editingWorker, setEditingWorker] = useState<any>(null);
   const [domainModal, setDomainModal] = useState<any>(null);
   const [newDomain, setNewDomain] = useState('');
   const [zoneId, setZoneId] = useState('');
@@ -121,21 +119,6 @@ const Dashboard = ({ credentials }: { credentials: any }) => {
       console.error('Delete failed', error);
     }
   };
-
-  if (isCreating || editingWorker) {
-    return (
-      <AIEditor
-        credentials={credentials}
-        onClose={() => {
-          setIsCreating(false);
-          setEditingWorker(null);
-          fetchWorkers();
-        }}
-        initialCode={editingWorker?.script}
-        workerName={editingWorker?.id}
-      />
-    );
-  }
 
   return (
     <div className="space-y-8">

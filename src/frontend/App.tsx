@@ -32,6 +32,8 @@ const App = () => {
     cfAccountId?: string;
     geminiKey?: string;
   }>({});
+  const [isCreating, setIsCreating] = useState(false);
+  const [editingWorker, setEditingWorker] = useState<any>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem('ai_worker_creds');
@@ -96,7 +98,23 @@ const App = () => {
             </header>
 
             <main className="flex-1 container mx-auto px-4 py-8">
-               <Dashboard credentials={credentials} />
+               {isCreating || editingWorker ? (
+                 <AIEditor
+                   credentials={credentials}
+                   onClose={() => {
+                     setIsCreating(false);
+                     setEditingWorker(null);
+                   }}
+                   initialCode={editingWorker?.script}
+                   workerName={editingWorker?.id}
+                 />
+               ) : (
+                 <Dashboard
+                   credentials={credentials}
+                   setIsCreating={setIsCreating}
+                   setEditingWorker={setEditingWorker}
+                 />
+               )}
             </main>
           </motion.div>
         )}
